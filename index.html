@@ -41,12 +41,41 @@ document.addEventListener('DOMContentLoaded', function() {
     initialView: 'dayGridMonth',
     locale: 'ja',
 
-    eventSources: [
-      {
-        url: 'https://aso-id.github.io/Weather-Monitoring-Schedule/aco_chill_camp_2026_schedule.ics'
-        format: 'ics'
+fetch('https://aso-id.github.io/Weather-Monitoring-Schedule/aco_chill_camp_2026_schedule.ics')
+  .then(res => res.text())
+  .then(data => {
+    const events = [];
+
+    const lines = data.split('\n');
+    let event = {};
+
+    lines.forEach(line => {
+      if (line.startsWith('BEGIN:VEVENT')) event = {};
+      if (line.startsWith('SUMMARY:')) event.title = line.replace('SUMMARY:', '');
+      if (line.startsWith('DTSTART')) event.start = line.split(':')[1];
+      if (line.startsWith('DTEND')) event.end = line.split(':')[1];
+
+      if (line.startsWith('END:VEVENT')) {
+        if (event.start) {
+          event.start = event.start.substring(0,8);
+          event.end = event.end ? event.end.substring(0,8) : event.start;
+          events.push(event);
+        }
       }
-    ],
+    });
+
+    const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+      initialView: 'dayGridMonth',
+      locale: 'ja',
+      events: events,
+      displayEventTime: false,
+      dayMaxEventRows: false,
+      expandRows: true,
+      height: 'auto'
+    });
+
+    calendar.render();
+  });
 
     displayEventTime: false,
     dayMaxEventRows: false,
